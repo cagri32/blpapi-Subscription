@@ -55,7 +55,7 @@ def main():
         print("Failed to open //blp/mktdata")
         return
 
-    security1 = "IBM US Equity"
+    security1 = "CVE CN Equity"
     security2 = "/cusip/912828GM6@BGN"
 
     subscriptions = blpapi.SubscriptionList()
@@ -79,7 +79,40 @@ def main():
             for msg in event:
                 if event.eventType() == blpapi.Event.SUBSCRIPTION_STATUS or \
                         event.eventType() == blpapi.Event.SUBSCRIPTION_DATA:
-                    print("%s - %s" % (msg.correlationIds()[0].value(), msg))
+                    #print("%s - %s" % (msg.correlationIds()[0].value(), msg))
+                    
+                    print("--------- UPDATE ----------\n")
+                    
+                    for field in msg.asElement().elements():
+                            if field.name() == "BID":
+                                firstEQ.setBid(field.getValueAsString())
+                            elif field.name() == "ASK":
+                                firstEQ.setAsk(field.getValueAsString())
+                            elif field.name() == "TIME":
+                                firstEQ.setTime(field.getValueAsString())
+                            elif field.name() == "VWAP":
+                                firstEQ.setVwap(field.getValueAsString())
+                                
+                        print(" Security: " + firstEQ.getName() +
+                        "\n Bid: " + firstEQ.getBid() +
+                        "\n Ask: " + firstEQ.getAsk() +
+                        "\n Vwap: " + firstEQ.getVwap() +
+                        "\n Time: ")
+                        print(firstEQ.getTime())
+                        print(" ")
+                        print(" Diff: "'{:f}'.format(float(format(firstEQ.getAsk())) -float(format(firstEQ.getBid()))))
+                        print(" ")
+                        
+                        if(float(firstEQ.getAsk()) - float(firstEQ.getBid()) >= 0):
+                            print(" OK \n")
+                        else:
+                            print("BAD")
+                            f = open("BadResult.txt", "w+")
+                            f.write(" Security: " + firstEQ.getName() +
+                        "\n Bid: " + firstEQ.getBid() +
+                        "\n Ask: " + firstEQ.getAsk() +
+                        " Diff: "'{:f}'.format(float(format(firstEQ.getAsk())) -float(format(firstEQ.getBid()))))
+
                 else:
                     print(msg)
             if event.eventType() == blpapi.Event.SUBSCRIPTION_DATA:

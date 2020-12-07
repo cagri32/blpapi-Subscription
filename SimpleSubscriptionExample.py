@@ -83,7 +83,16 @@ def main():
             # We provide timeout to give the chance to Ctrl+C handling:
             event = session.nextEvent(500)
             for msg in event:
-                if event.eventType() == blpapi.Event.SUBSCRIPTION_DATA:
+                if (event.eventType() == blpapi.Event.SUBSCRIPTION_STATUS 
+                        and msg.messageType() == "SubscriptionFailure"):
+                   #msg.correlationIds()[0].value().find("Failure")!=-1
+                    f = open("BadSubscription.txt", "a+")
+                    s = ""
+                    if msg.getElement("reason").getElement("errorCode").getValueAsInteger() !=12:
+                        s = msg.toString()
+                    f.write(s)
+
+                elif event.eventType() == blpapi.Event.SUBSCRIPTION_DATA:
                     print("--------- UPDATE ----------\n")
                     
                     oneEquity = msg.correlationIds()[0].value()  
@@ -124,6 +133,7 @@ def main():
                     
                 else:
                     print(msg)
+                    print(msg.messageType())
             if event.eventType() == blpapi.Event.SUBSCRIPTION_DATA:
                 eventCount += 1
                 if eventCount >= options.maxEvents:

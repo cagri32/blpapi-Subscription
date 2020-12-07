@@ -83,42 +83,45 @@ def main():
             # We provide timeout to give the chance to Ctrl+C handling:
             event = session.nextEvent(500)
             for msg in event:
-                if event.eventType() == blpapi.Event.SUBSCRIPTION_STATUS or \
-                        event.eventType() == blpapi.Event.SUBSCRIPTION_DATA:
-                    #print("%s - %s" % (msg.correlationIds()[0].value(), msg))
-                    
+                if event.eventType() == blpapi.Event.SUBSCRIPTION_DATA:
                     print("--------- UPDATE ----------\n")
                     
-                    for field in msg.asElement().elements():
-                            if field.name() == "BID":
-                                firstEQ.setBid(field.getValueAsString())
-                            elif field.name() == "ASK":
-                                firstEQ.setAsk(field.getValueAsString())
-                            elif field.name() == "TIME":
-                                firstEQ.setTime(field.getValueAsString())
-                            elif field.name() == "VWAP":
-                                firstEQ.setVwap(field.getValueAsString())
-                                
-                        print(" Security: " + firstEQ.getName() +
-                        "\n Bid: " + firstEQ.getBid() +
-                        "\n Ask: " + firstEQ.getAsk() +
-                        "\n Vwap: " + firstEQ.getVwap() +
-                        "\n Time: ")
-                        print(firstEQ.getTime())
-                        print(" ")
-                        print(" Diff: "'{:f}'.format(float(format(firstEQ.getAsk())) -float(format(firstEQ.getBid()))))
-                        print(" ")
-                        
-                        if(float(firstEQ.getAsk()) - float(firstEQ.getBid()) >= 0):
-                            print(" OK \n")
-                        else:
-                            print("BAD")
-                            f = open("BadResult.txt", "w+")
-                            f.write(" Security: " + firstEQ.getName() +
-                        "\n Bid: " + firstEQ.getBid() +
-                        "\n Ask: " + firstEQ.getAsk() +
-                        " Diff: "'{:f}'.format(float(format(firstEQ.getAsk())) -float(format(firstEQ.getBid()))))
-
+                    oneEquity = msg.correlationIds()[0].value()  
+                    
+                    # Check and update if the newly arrived message has any updates for the following fields                    
+                    if msg.hasElement("BID"):
+                        equity[oneEquity]['BID'] = msg.getElement("BID").getValueAsFloat()
+                    if msg.hasElement("ASK"):
+                        equity[oneEquity]['ASK'] = msg.getElement("ASK").getValueAsFloat()
+                    if msg.hasElement("VWAP"):
+                        equity[oneEquity]['VWAP'] = msg.getElement("VWAP").getValueAsFloat()
+                    if msg.hasElement("TIME"):
+                        equity[oneEquity]['TIME'] = msg.getElement("TIME").getValueAsString()
+                
+                    # Print the updated Equity with all fields
+                    
+                    print(" Security: " + oneEquity +
+                    "\n Bid:  " + str(equity[oneEquity]['BID']) +
+                    "\n Ask:  " + str(equity[oneEquity]['ASK']))
+                    diff = equity[oneEquity]['ASK'] - equity[oneEquity]['BID']
+                    print(" Diff: %.5f" % diff)
+                    
+                    # If Ask-Bid difference is normal (0 or positive), print OK
+                    if(diff >= 0):
+                        print(" OK \n")
+                    # If Ask-Bid difference is negative, print BAD and write the necessary info to a file
+                    else:
+                        print("BAD")
+                    
+                    print("\n Vwap: " + str(equity[oneEquity]['VWAP']))
+                    print(" Time: "+ equity[oneEquity]['TIME'])
+                    
+                    # If time stamp is Null, print BAD and write the necessary info to a file
+                    if(equity[oneEquity]['TIME'] is None):
+                        print("BAD")
+                    else:
+                        print(" OK \n")
+                    
                 else:
                     print(msg)
             if event.eventType() == blpapi.Event.SUBSCRIPTION_DATA:

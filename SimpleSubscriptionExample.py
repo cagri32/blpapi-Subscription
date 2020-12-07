@@ -55,19 +55,25 @@ def main():
         print("Failed to open //blp/mktdata")
         return
 
-    security1 = "CVE CN Equity"
-    security2 = "/cusip/912828GM6@BGN"
-
+    ### Use this list for writing the equity names manually
+    equityNames = ["CVE CN Equity", "N CN Equity", "IBM US Equity", "CM CN Equity", "CM CT Equity"]# take name of the equities from a file as strings    
+    
+    ### Use this function for pulling the equity names from the input file
+  # with open('input.txt') as f:
+  #     equityNames2 = f.readlines()
+  # equityNames = [x.strip() for x in equityNames2]
+  # equity = {} 
+    ###
+    
     subscriptions = blpapi.SubscriptionList()
-    subscriptions.add(security1,
-                      "LAST_PRICE,BID,ASK",
+    
+    for i in range(len(equityNames)):
+        equity[equityNames[i]] = {'BID': "0.0", 'ASK': "0.0", 'VWAP': "0.0", 'TIME': "0.0" }
+        subscriptions.add(equityNames[i],
+                      "BID,ASK, VWAP, TIME",
                       "",
-                      blpapi.CorrelationId(security1))
-    subscriptions.add(security2,
-                      "LAST_PRICE,BID,ASK,BID_YIELD,ASK_YIELD",
-                      "",
-                      blpapi.CorrelationId(security2))
-
+                      blpapi.CorrelationId(equityNames[i]))
+        
     session.subscribe(subscriptions)
 
     try:
